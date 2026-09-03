@@ -20,12 +20,17 @@ jobs:
         python-version: "3.12"
 
     - name: Install backend dependencies
+      working-directory: backend
       run: |
-        cd backend
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        python -m pip install -r requirements.txt
+
+    - name: Check backend syntax
+      working-directory: backend
+      run: python -m compileall -q app tests
 
     - name: Run 64-Case Adversarial Benchmark Suite
+      working-directory: backend
       env:
         OPENROUTER_API_KEY: "mock-offline-key"
         RAZORPAY_KEY_ID: "rzp_test_placeholder"
@@ -34,5 +39,4 @@ jobs:
         MAX_DAILY_SPEND_INR: "250000"
         ALLOWED_CURRENCY: "INR"
       run: |
-        cd backend
-        pytest tests/test_adversarial_suite.py -v -s
+        python -m pytest tests/test_adversarial_suite.py -v -s
