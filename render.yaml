@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: agentpay-guard-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/vault/verify
+    envVars:
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: MAX_SESSION_SPEND_INR
+        value: "100000"
+      - key: MAX_DAILY_SPEND_INR
+        value: "250000"
+      - key: DATABASE_PATH
+        value: /tmp/audit_vault.db

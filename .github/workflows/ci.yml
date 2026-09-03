@@ -1,0 +1,38 @@
+name: AgentPay-Guard Invariant & Benchmark Suite
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  security-benchmark:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install backend dependencies
+      run: |
+        cd backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run 64-Case Adversarial Benchmark Suite
+      env:
+        OPENROUTER_API_KEY: "mock-offline-key"
+        RAZORPAY_KEY_ID: "rzp_test_placeholder"
+        RAZORPAY_KEY_SECRET: "rzp_secret_placeholder"
+        MAX_SESSION_SPEND_INR: "100000"
+        MAX_DAILY_SPEND_INR: "250000"
+        ALLOWED_CURRENCY: "INR"
+      run: |
+        cd backend
+        pytest tests/test_adversarial_suite.py -v -s

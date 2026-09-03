@@ -1,0 +1,32 @@
+# Python & Virtual Environments
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Databases & Local Logs
+*.db
+*.sqlite3
+audit_vault.db
+
+# Secrets & Environment Files
+.env
+.env.local
+.env.*.local
+
+# Node & Frontend Build
+node_modules/
+dist/
+dist-ssr/
+*.local
+.npm/
+
+# IDE & OS Specific
+.DS_Store
+.vscode/
+.idea/
+*.swp
