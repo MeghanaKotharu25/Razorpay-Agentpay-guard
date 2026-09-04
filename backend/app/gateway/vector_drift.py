@@ -1,8 +1,13 @@
 import re
 from typing import Set
 from typing import Any, Dict
+from functools import lru_cache
 
 class LexicalCategoryDriftEngine:
+
+    @lru_cache(maxsize=2048)
+    def _cached_lexical_drift(self, user_intent: str, sku: str) -> float:
+        return self.compute_lexical_drift(user_intent, sku)
 
     def _tokenize(self, text: str) -> Set[str]:
         # Split camelCase, snake_case, and alphanumeric boundaries (e.g. xps13 -> xps, 13)
@@ -67,7 +72,7 @@ class LexicalCategoryDriftEngine:
             amount = proposed_tool_payload.get("amount_inr")
             quantity = proposed_tool_payload.get("quantity", 1)
 
-        drift = self.compute_lexical_drift(user_intent, sku)
+        drift = self._cached_lexical_drift(user_intent, sku)
         budget_match = re.search(r"(?:under|below|within|less than)\s*(?:₹|inr\s*)?([\d,]+)", user_intent, re.IGNORECASE)
         if budget_match and amount is not None and float(amount) > float(budget_match.group(1).replace(",", "")):
             drift = max(drift, 0.85)

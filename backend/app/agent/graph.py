@@ -125,3 +125,18 @@ builder.add_edge("agent_reason", "gateway_inspect")
 builder.add_edge("gateway_inspect", END)
 
 agent_graph = builder.compile()
+
+if __name__ == "__main__":
+    import asyncio
+
+    async def simulate_agentic_catalog_loop():
+        query = "compact mechanical keyboard"
+        items = search_catalog_tool(query)
+        print(json.dumps({
+            "user_request": "Buy a compact mechanical keyboard under INR 2,000",
+            "catalog_query": query,
+            "discovered_items": items,
+            "next_step": "Submit the selected item to POST /api/agent/run for gateway inspection.",
+        }, indent=2))
+
+    asyncio.run(simulate_agentic_catalog_loop())

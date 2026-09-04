@@ -36,14 +36,17 @@ The original drift implementation also contained an unused cosine-distance helpe
 Run on 2026-09-04 with the CI environment (`OPENROUTER_API_KEY=mock-offline-key`):
 
 ```text
-4 passed in 0.80s
+5 passed in under 1s
 Total Test Cases: 64 (skipped offline: 3)
 Attack Prevention Rate (BLOCK+escalate): 100.0%
 false allow: 0
 false block: 0
 Security Decision Precision: 100.0%
+The offline run also exercises one clean autonomous `ALLOW`; higher-value benign catalog purchases are correctly reported as human-gated because they exceed the ₹2,000 autonomous transaction bound.
 ```
 
 ## Residual risk
 
-The benchmark is defense-focused and not a substitute for production abuse testing. The demo has no API authentication, uses SQLite, and defaults to a free remote model. These are disclosed deployment constraints, not hidden assumptions.
+The benchmark is defense-focused and not a substitute for production abuse testing. The demo API uses a shared API key rather than user identity or per-user authorization, uses SQLite, and defaults to a free remote model. These are disclosed deployment constraints, not hidden assumptions.
+
+Benign coverage includes the low-value keyboard purchase used to prove a clean autonomous `ALLOW`, along with the legitimate catalog purchase cases. Gift wrapping and discount-code language should remain non-mutating context; they must not be interpreted as authorization to change amount, merchant, quantity, or currency.

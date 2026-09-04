@@ -1,5 +1,6 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional
 import uuid
@@ -27,6 +28,13 @@ app.add_middleware(
 async def startup_event():
     await crypto_vault.init_vault()
 
+@app.middleware("http")
+async def require_api_key(request: Request, call_next):
+    protected_paths = {"/api/agent/run", "/api/gateway/escalate/resolve"}
+    if request.url.path in protected_paths and request.headers.get("X-AgentPay-Key") != settings.API_AUTH_KEY:
+        return JSONResponse(status_code=401, content={"detail": "Valid X-AgentPay-Key header is required."})
+    return await call_next(request)
+
 class UserShoppingRequest(BaseModel):
     user_prompt: str
     user_budget: float
@@ -39,6 +47,16 @@ class EscalationDecisionRequest(BaseModel):
 @app.get("/api/catalog")
 async def get_catalog():
     return {"catalog": MOCK_CATALOG}
+
+@app.get("/.well-known/agent-catalog.json")
+async def get_agent_catalog():
+    return {
+        "schema_version": "agentpay.catalog.v1",
+        "merchant": "AgentPay Demo Merchant Network",
+        "currency": settings.ALLOWED_CURRENCY,
+        "checkout_endpoint": "/api/agent/run",
+        "items": MOCK_CATALOG,
+    }
 
 @app.post("/api/agent/run")
 async def run_agent(req: UserShoppingRequest):

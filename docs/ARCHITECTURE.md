@@ -26,4 +26,4 @@ The proposed tool payload and retrieved catalog context are untrusted. The seman
 
 ## Configuration
 
-`MAX_SESSION_SPEND_INR` is cumulative per session, while `MAX_DAILY_SPEND_INR` is cumulative across all sessions for the UTC day. `ALLOWED_ORIGINS` controls browser access. Defaults are intentionally local/demo-oriented.
+`MAX_SESSION_SPEND_INR` is cumulative per session, while `MAX_DAILY_SPEND_INR` is cumulative across all sessions for the UTC day. Idempotency fingerprints are scoped by session, merchant, amount, and cart hash and expire after `IDEMPOTENCY_TTL_SECONDS` (10 minutes by default). Lexical drift is deterministic and cached for 2,048 recent intent/SKU pairs, so the hot path does not call a remote embedding service. `ALLOWED_ORIGINS` and `API_AUTH_KEY` control browser and API access. Defaults are intentionally local/demo-oriented.

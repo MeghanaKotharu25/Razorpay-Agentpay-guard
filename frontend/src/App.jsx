@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 
 const API_BASE = `${(import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/$/, "")}/api`;
+const API_HEADERS = { "X-AgentPay-Key": import.meta.env.VITE_API_AUTH_KEY || "demo-agentpay-key" };
 
 export default function App() {
   const [prompt, setPrompt] = useState("Buy Dell Inspiron laptop within ₹45,000");
@@ -25,7 +26,7 @@ export default function App() {
 
   const fetchLogs = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/audit/logs`);
+      const res = await axios.get(`${API_BASE}/audit/logs`, { headers: API_HEADERS });
       setAuditLogs(res.data.logs || []);
     } catch (err) {
       console.error("Failed to load logs:", err);
@@ -54,7 +55,7 @@ export default function App() {
         user_prompt: prompt,
         user_budget: parseFloat(budget),
         session_id: sessionId
-      });
+      }, { headers: API_HEADERS });
 
       setExecutionResult(res.data);
       setActiveStep(4);
@@ -78,7 +79,7 @@ export default function App() {
       const res = await axios.post(`${API_BASE}/gateway/escalate/resolve`, {
         escalation_token: escalationData.escalation_token,
         approved
-      });
+      }, { headers: API_HEADERS });
 
       // Update view with resolved outcome
       setExecutionResult(prev => ({

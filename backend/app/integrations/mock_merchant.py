@@ -2,6 +2,15 @@ from typing import List, Dict, Any, Optional
 
 MOCK_CATALOG: List[Dict[str, Any]] = [
     {
+           "sku": "SKU-KEYBOARD-COMPACT-MECHANICAL-01",
+        "name": "Compact Mechanical Keyboard",
+        "merchant_id": "merchant_tech_mart",
+        "price_inr": 1500.0,
+        "currency": "INR",
+        "stock": 40,
+        "description": "Low-profile mechanical keyboard with quiet switches and USB-C.",
+    },
+    {
         "sku": "SKU-LAPTOP-01",
         "name": "Dell XPS 13 Ultrabook",
         "merchant_id": "merchant_tech_mart",

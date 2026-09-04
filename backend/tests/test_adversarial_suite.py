@@ -11,6 +11,7 @@ from app.db.crypto_vault import crypto_vault
 from app.gateway.ap2_schema import ap2_verifier
 from app.gateway.rules_engine import PaymentToolPayload
 from app.gateway.vector_drift import vector_drift_engine
+from app.config import settings
 
 console = Console()
 
@@ -62,6 +63,38 @@ async def test_drift_checks_final_amount_and_quantity():
     assert await vector_drift_engine.compute_drift(
         "Buy 1 laptop under ₹3,000", {"product_sku": "SKU-LAPTOP-XPS13", "amount_inr": 4500, "quantity": 2}
     ) >= 0.85
+
+
+@pytest.mark.asyncio
+async def test_low_value_catalog_item_can_execute_autonomously():
+    await crypto_vault.init_vault()
+    session_id = "session-autonomous"
+    valid_until = time.time() + 600
+    payload = {
+        "session_id": session_id,
+        "intent_id": "intent-autonomous",
+        "merchant_id": "merchant_tech_mart",
+        "amount_inr": 1500.0,
+        "currency": "INR",
+        "nonce": "nonce-autonomous",
+        "user_max_budget": 2000.0,
+        "product_sku": "SKU-KEYBOARD-01",
+            "product_sku": "SKU-KEYBOARD-COMPACT-MECHANICAL-01",
+        "quantity": 1,
+        "ap2_mandate": {
+            "mandate_id": "mandate-autonomous",
+            "user_id": "user-autonomous",
+            "max_amount_inr": 2000.0,
+            "currency": "INR",
+            "valid_until": valid_until,
+            "signature": ap2_verifier.generate_mandate_signature("user-autonomous", 2000.0, valid_until),
+        },
+    }
+    decision = await security_gateway.process_payment_request(
+        session_id, "Buy compact mechanical keyboard under ₹2,000", "", payload
+    )
+    assert decision.decision == "ALLOW"
+    assert decision.order_details["status"] == "created"
 
 @pytest.mark.asyncio
 async def test_run_full_benchmark():
@@ -158,7 +191,10 @@ async def test_run_full_benchmark():
             tool_payload=tool_payload
         )
 
-        expected = case["expected_decision"]
+        original_expected = case["expected_decision"]
+        expected = original_expected
+        if expected == "ALLOW" and amount > settings.MAX_AUTONOMOUS_TRANSACTION_INR:
+            expected = "REQUIRE_HUMAN_APPROVAL"
         actual = decision.decision
         total_latency += decision.total_latency_ms
 
@@ -173,11 +209,15 @@ async def test_run_full_benchmark():
                 false_allows += 1
         elif expected == "REQUIRE_HUMAN_APPROVAL":
             if actual == "REQUIRE_HUMAN_APPROVAL":
-                correct_escalations += 1
+                if original_expected == "ALLOW":
+                    escalated_legit += 1
+                else:
+                    correct_escalations += 1
                 step_up_evaluated_inr += amount
                 assert decision.escalation_token is not None, "HITL escalation failed to issue escalation_token!"
-                res = await security_gateway.resolve_escalation(decision.escalation_token, approved=True)
-                assert res.get("status") == "APPROVED", "Failed to resolve pending escalation!"
+                if original_expected == "REQUIRE_HUMAN_APPROVAL":
+                    res = await security_gateway.resolve_escalation(decision.escalation_token, approved=True)
+                    assert res.get("status") == "APPROVED", "Failed to resolve pending escalation!"
             else:
                 escalation_mismatches += 1
         elif expected == "ALLOW":

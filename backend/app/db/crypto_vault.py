@@ -82,6 +82,11 @@ class CryptographicAuditVault:
         if not self._initialized:
             await self.init_vault()
         async with aiosqlite.connect(self.db_path) as db:
+            await db.execute("BEGIN IMMEDIATE")
+            await db.execute(
+                "DELETE FROM idempotency_records WHERE created_at < ?",
+                (time.time() - settings.IDEMPOTENCY_TTL_SECONDS,),
+            )
             cursor = await db.execute(
                 "INSERT OR IGNORE INTO idempotency_records (fingerprint, trace_id, session_id, decision, created_at) VALUES (?, ?, ?, ?, ?)",
                 (fingerprint, trace_id, session_id, decision, time.time()),
@@ -257,3 +262,18 @@ class CryptographicAuditVault:
             return {"is_valid": True, "total_blocks": len(blocks), "status": "VERIFIED_INTEGRAL"}
 
 crypto_vault = CryptographicAuditVault()
+
+if __name__ == "__main__":
+    import argparse
+    import asyncio
+
+    parser = argparse.ArgumentParser(description="Verify the AgentPay-Guard HMAC audit chain.")
+    parser.add_argument("--verify-chain", action="store_true", help="recalculate every stored audit block")
+    args = parser.parse_args()
+    if args.verify_chain:
+        result = asyncio.run(crypto_vault.verify_chain_integrity())
+        if result["is_valid"]:
+            print("[CHAIN_VALID: 100% INTEL_INTEGRITY]")
+        else:
+            print(f"[CHAIN_INVALID: {result}]")
+            raise SystemExit(1)

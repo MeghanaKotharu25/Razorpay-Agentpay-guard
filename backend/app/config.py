@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     MAX_DAILY_SPEND_INR: float = 250000.0
     MAX_AUTONOMOUS_TRANSACTION_INR: float = 2000.0
     AUDIT_HMAC_SECRET: str = "agentpay-demo-audit-secret-change-me"
+    IDEMPOTENCY_TTL_SECONDS: int = 600
+    API_AUTH_KEY: str = "demo-agentpay-key"
     ALLOWED_CURRENCY: str = "INR"
     ALLOWED_ORIGINS: List[str] = ["http://localhost:5173"]
     ALLOWED_MERCHANTS: List[str] = [
