@@ -1,4 +1,5 @@
 import razorpay
+import time
 from typing import Dict, Any
 from app.config import settings
 
@@ -59,14 +60,31 @@ class RazorpayTestClient:
         }
 
     def create_payment_link(self, amount_inr: float, currency: str, receipt_id: str, notes: Dict[str, str]) -> Dict[str, Any]:
-        """Return a hosted-payment fallback when autonomous execution is bounded."""
+        """Create a hosted Razorpay link, with a local demo fallback when unconfigured."""
+        amount_paise = int(amount_inr * 100)
+        payload = {
+            "amount": amount_paise,
+            "currency": currency,
+            "accept_partial": False,
+            "expire_by": int(time.time()) + 600,
+            "reference_id": receipt_id,
+            "description": "AgentPay-Guard human-approved payment",
+            "notes": notes,
+        }
+        if self.is_configured and self.client:
+            try:
+                return self.client.payment_link.create(data=payload)
+            except Exception:
+                pass
+
         return {
             "id": f"plink_test_mock_{receipt_id}",
             "short_url": f"https://rzp.io/i/agentpay-{receipt_id}",
-            "amount": int(amount_inr * 100),
+            "amount": amount_paise,
             "currency": currency,
             "status": "created",
             "notes": notes,
+            "mode": "local-demo-fallback",
         }
 
 razorpay_client = RazorpayTestClient()

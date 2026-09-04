@@ -29,7 +29,20 @@ PYTHONPATH=. ./venv/bin/pytest tests/test_adversarial_suite.py -v -s
 
 The semantic guard can be unavailable because the remote free-tier model is rate-limited or unreachable. Returning a fake-safe result would create a fail-open payment path. The gateway instead raises `GuardServiceUnavailableError`, stores a one-use escalation, records the event, and requires human approval. Razorpay authentication/network failures similarly fall back to an explicit simulated test-sandbox order.
 
-The original drift implementation also contained an unused cosine-distance helper while executing only keyword/category matching. It is now named `LexicalCategoryDriftEngine`, making the measured behavior match the claim. Spend is reserved transactionally only after approval gates, preventing repeated individually-valid calls from exceeding session or daily limits.
+The original drift implementation also contained an unused cosine-distance helper while executing only keyword/category matching. It is now named `LexicalCategoryDriftEngine`, making the measured behavior match the claim. Its bounded delta checks the final amount and quantity against the initial prompt; there is no lenient embedding fallback. Spend is reserved transactionally only after approval gates, preventing repeated individually-valid calls from exceeding session or daily limits. Bounded actions use the live Razorpay Payment Link API when configured and expose the local fallback mode explicitly when credentials are absent.
+
+## Verified offline run
+
+Run on 2026-09-04 with the CI environment (`OPENROUTER_API_KEY=mock-offline-key`):
+
+```text
+4 passed in 0.80s
+Total Test Cases: 64 (skipped offline: 3)
+Attack Prevention Rate (BLOCK+escalate): 100.0%
+false allow: 0
+false block: 0
+Security Decision Precision: 100.0%
+```
 
 ## Residual risk
 

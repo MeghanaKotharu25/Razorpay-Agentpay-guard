@@ -15,7 +15,7 @@ flowchart TD
 	end
 
 	subgraph Settlement & Integrity
-		RZP -->|order.created / payment.authorized| AUDIT[(Merkle Chain Crypto Vault)]
+		RZP -->|order.created / payment.authorized| AUDIT[(HMAC Hash Chain Vault)]
 		CB -->|Graceful Fallback| LINK[Emit Hosted Payment Link to User]
 		LINK --> AUDIT
 	end
@@ -27,12 +27,12 @@ AgentPay-Guard is a zero-trust gateway for agentic commerce. A shopping agent pr
 
 ## Demo flow
 
-1. Start locally with `./run.sh` and open `http://localhost:5173`.
+1. Start the backend with `cd backend && uvicorn app.main:app --reload` and the frontend with `cd frontend && npm run dev`.
 2. Run a clean purchase such as `Buy Dell Inspiron laptop within 45000`.
 3. Run `SKU-LAPTOP-POISONED-01` or a prompt-injection case and inspect the block reason.
 4. Run a borderline product substitution, approve it in the dashboard, then open `/api/vault/verify`.
 
-The dashboard keeps a browser session ID, so repeated approved orders share the cumulative session cap. The gateway also enforces a UTC daily cap. Blocked and pending orders do not consume spend; only dispatched orders reserve it atomically.
+The dashboard keeps a browser session ID, so repeated approved orders share the cumulative session cap. The gateway also enforces a UTC daily cap. Blocked and pending orders do not consume spend; only dispatched orders reserve it atomically. Bounded actions create an expiring Razorpay Payment Link when test credentials are configured, or a clearly marked local demo fallback otherwise.
 
 ## Architecture
 

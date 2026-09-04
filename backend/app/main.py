@@ -64,6 +64,7 @@ async def resolve_escalation(req: EscalationDecisionRequest):
     return res
 
 @app.get("/api/vault/verify")
+@app.get("/api/v1/audit/verify")
 async def verify_ledger():
     return await crypto_vault.verify_chain_integrity()
 

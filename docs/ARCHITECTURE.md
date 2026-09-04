@@ -10,7 +10,7 @@ Shopping agent
 		 currency, per-order budget, AP2 signature, system ceiling,
 		 merchant allowlist, persistent nonce replay protection
 	 -> semantic guard (LLM, fail-closed on outage)
-	 -> lexical category drift
+	 -> lexical category drift and amount/quantity delta
 		 < .35 allow candidate, .35-.70 human approval, >= .70 block
 	 -> atomic authorized-spend reservation
 		 cumulative session cap + UTC daily cap
@@ -18,7 +18,7 @@ Shopping agent
 	 -> hash-chained audit vault
 ```
 
-Human approval stores a one-use escalation token. Approval performs the same atomic spend reservation before dispatch; rejection records a block. The SQLite vault stores nonces, pending escalations, spend reservations, and audit blocks. Each audit block uses HMAC-SHA256 over the previous hash and event data, and the chain is verified by `/api/vault/verify`.
+Human approval stores a one-use escalation token. Approval performs the same atomic spend reservation before dispatch; rejection records a block. The SQLite vault stores nonces, pending escalations, spend reservations, idempotency claims, and audit blocks. Each audit block uses HMAC-SHA256 over the previous hash and event data, and the chain is verified by `/api/vault/verify` or `/api/v1/audit/verify`. Bounded actions use Razorpay Payment Links when credentials are configured.
 
 ## Trust boundaries
 
