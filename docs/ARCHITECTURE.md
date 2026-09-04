@@ -18,7 +18,7 @@ Shopping agent
 	 -> hash-chained audit vault
 ```
 
-Human approval stores a one-use escalation token. Approval performs the same atomic spend reservation before dispatch; rejection records a block. The SQLite vault stores nonces, pending escalations, spend reservations, and audit blocks. Audit blocks include the previous hash and are verified by `/api/vault/verify`.
+Human approval stores a one-use escalation token. Approval performs the same atomic spend reservation before dispatch; rejection records a block. The SQLite vault stores nonces, pending escalations, spend reservations, and audit blocks. Each audit block uses HMAC-SHA256 over the previous hash and event data, and the chain is verified by `/api/vault/verify`.
 
 ## Trust boundaries
 

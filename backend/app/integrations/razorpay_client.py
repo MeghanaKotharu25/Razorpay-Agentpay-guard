@@ -58,4 +58,15 @@ class RazorpayTestClient:
             "notes": notes
         }
 
+    def create_payment_link(self, amount_inr: float, currency: str, receipt_id: str, notes: Dict[str, str]) -> Dict[str, Any]:
+        """Return a hosted-payment fallback when autonomous execution is bounded."""
+        return {
+            "id": f"plink_test_mock_{receipt_id}",
+            "short_url": f"https://rzp.io/i/agentpay-{receipt_id}",
+            "amount": int(amount_inr * 100),
+            "currency": currency,
+            "status": "created",
+            "notes": notes,
+        }
+
 razorpay_client = RazorpayTestClient()

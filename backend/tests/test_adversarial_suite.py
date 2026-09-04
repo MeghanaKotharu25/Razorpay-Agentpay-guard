@@ -9,6 +9,8 @@ from app.gateway.interceptor import security_gateway
 from app.gateway.semantic_guard import semantic_guard
 from app.db.crypto_vault import crypto_vault
 from app.gateway.ap2_schema import ap2_verifier
+from app.gateway.rules_engine import PaymentToolPayload
+from app.gateway.vector_drift import vector_drift_engine
 
 console = Console()
 
@@ -36,6 +38,30 @@ async def test_spend_reservation_enforces_cumulative_session_cap():
         "daily_total_inr": 100.0,
     }
     assert await crypto_vault.reserve_spend("trace-4", "session-2", 0.01, 500.0, 100.0) == "CUMULATIVE_DAILY_SPEND_CAP_EXCEEDED"
+
+
+@pytest.mark.asyncio
+async def test_idempotency_fingerprint_and_hmac_chain():
+    await crypto_vault.init_vault()
+    payload = PaymentToolPayload(
+        session_id="session-1", intent_id="intent-1", merchant_id="merchant_tech_mart",
+        amount_inr=1500, currency="INR", nonce="nonce-1", user_max_budget=2000,
+        product_sku="SKU-LAPTOP-XPS13", quantity=1,
+    )
+    fingerprint = payload.idempotency_fingerprint()
+    assert await crypto_vault.claim_idempotency(fingerprint, "trace-1", "session-1")
+    assert not await crypto_vault.claim_idempotency(fingerprint, "trace-2", "session-1")
+    await crypto_vault.record_event("trace-1", "session-1", "ALLOW", payload.model_dump(), 1.0)
+    verification = await crypto_vault.verify_chain_integrity()
+    assert verification["is_valid"] is True
+    assert len((await crypto_vault.fetch_recent_blocks(1))[0]["current_block_hash"]) == 64
+
+
+@pytest.mark.asyncio
+async def test_drift_checks_final_amount_and_quantity():
+    assert await vector_drift_engine.compute_drift(
+        "Buy 1 laptop under ₹3,000", {"product_sku": "SKU-LAPTOP-XPS13", "amount_inr": 4500, "quantity": 2}
+    ) >= 0.85
 
 @pytest.mark.asyncio
 async def test_run_full_benchmark():

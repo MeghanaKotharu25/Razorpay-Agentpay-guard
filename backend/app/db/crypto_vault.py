@@ -1,4 +1,5 @@
 import hashlib
+import hmac
 import json
 import time
 from datetime import datetime, timezone
@@ -44,6 +45,14 @@ CREATE TABLE IF NOT EXISTS spend_reservations (
     spending_day TEXT NOT NULL,
     reserved_at REAL NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS idempotency_records (
+    fingerprint TEXT PRIMARY KEY,
+    trace_id TEXT NOT NULL,
+    session_id TEXT NOT NULL,
+    decision TEXT NOT NULL,
+    created_at REAL NOT NULL
+);
 """
 
 class CryptographicAuditVault:
@@ -67,7 +76,18 @@ class CryptographicAuditVault:
 
     def _compute_block_hash(self, prev_hash: str, timestamp: float, trace_id: str, payload_json: str, decision: str) -> str:
         block_string = f"{prev_hash}|{timestamp}|{trace_id}|{payload_json}|{decision}".encode("utf-8")
-        return hashlib.sha256(block_string).hexdigest()
+        return hmac.new(settings.AUDIT_HMAC_SECRET.encode(), block_string, hashlib.sha256).hexdigest()
+
+    async def claim_idempotency(self, fingerprint: str, trace_id: str, session_id: str, decision: str = "IN_FLIGHT") -> bool:
+        if not self._initialized:
+            await self.init_vault()
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                "INSERT OR IGNORE INTO idempotency_records (fingerprint, trace_id, session_id, decision, created_at) VALUES (?, ?, ?, ?, ?)",
+                (fingerprint, trace_id, session_id, decision, time.time()),
+            )
+            await db.commit()
+            return cursor.rowcount == 1
 
     async def record_event(
         self,

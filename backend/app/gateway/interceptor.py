@@ -2,7 +2,7 @@ import uuid
 import time
 from typing import Dict, Any, Optional
 from pydantic import BaseModel
-from app.gateway.rules_engine import deterministic_engine, PaymentToolPayload
+from app.gateway.rules_engine import deterministic_engine, PaymentToolPayload, ActionBoundedError
 from app.gateway.semantic_guard import semantic_guard, GuardServiceUnavailableError
 from app.gateway.vector_drift import vector_drift_engine
 from app.integrations.razorpay_client import razorpay_client
@@ -58,7 +58,44 @@ class SecurityGatewayInterceptor:
             )
 
         # Step 2: Tier-0 Deterministic Invariant Check (<0.1ms)
-        rule_result = await deterministic_engine.validate(parsed_payload)
+        try:
+            fingerprint = parsed_payload.idempotency_fingerprint()
+            if not await crypto_vault.claim_idempotency(fingerprint, trace_id, session_id):
+                raise ActionBoundedError("Duplicate payment fingerprint detected; retry suppressed safely.")
+            rule_result = await deterministic_engine.validate(parsed_payload)
+        except ActionBoundedError as e:
+            elapsed = (time.perf_counter() - start_time) * 1000
+            is_duplicate = "Duplicate" in str(e)
+            violation = "IDEMPOTENCY_REPLAY" if is_duplicate else "ACTION_BOUNDED"
+            payment_link = None if is_duplicate else razorpay_client.create_payment_link(
+                amount_inr=parsed_payload.amount_inr,
+                currency=parsed_payload.currency,
+                receipt_id=parsed_payload.intent_id,
+                notes={"session_id": session_id, "bounded": "true"},
+            )
+            escalation_token = None
+            if not is_duplicate:
+                escalation_token = f"esc_{uuid.uuid4().hex[:12]}"
+                await crypto_vault.save_pending_escalation(
+                    escalation_token=escalation_token,
+                    trace_id=trace_id,
+                    session_id=session_id,
+                    user_prompt=user_prompt,
+                    payload=parsed_payload.model_dump(),
+                )
+            block_hash = await crypto_vault.record_event(
+                trace_id=trace_id, session_id=session_id,
+                decision="REQUIRE_HUMAN_APPROVAL" if not is_duplicate else "BLOCK",
+                payload=tool_payload, latency_ms=elapsed, user_prompt=user_prompt,
+                violation_code=violation, reason=str(e),
+            )
+            return GatewayDecision(
+                trace_id=trace_id, session_id=session_id,
+                decision="REQUIRE_HUMAN_APPROVAL" if not is_duplicate else "BLOCK",
+                violation_code=violation, reason=str(e), total_latency_ms=elapsed,
+                order_details=payment_link, escalation_token=escalation_token,
+                block_hash=block_hash,
+            )
         if not rule_result.is_valid:
             elapsed = (time.perf_counter() - start_time) * 1000
             block_hash = await crypto_vault.record_event(
@@ -87,7 +124,7 @@ class SecurityGatewayInterceptor:
         # exception is caught here and routed to human review — an outage
         # in the guard is a reason to slow down, never a reason to let a
         # transaction through unverified.
-        vector_drift = await vector_drift_engine.compute_drift(user_prompt, parsed_payload.product_sku)
+        vector_drift = await vector_drift_engine.compute_drift(user_prompt, parsed_payload.model_dump())
 
         try:
             semantic_result = await semantic_guard.inspect(

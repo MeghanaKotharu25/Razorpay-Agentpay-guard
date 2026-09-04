@@ -11,8 +11,10 @@ class Settings(BaseSettings):
     RAZORPAY_KEY_SECRET: str = "rzp_secret_placeholder"
 
     # Set system-level ceiling to 1 Lakh INR to support standard laptops
-    MAX_SESSION_SPEND_INR: float = 100000.0
+    MAX_SESSION_SPEND_INR: float = 10000.0
     MAX_DAILY_SPEND_INR: float = 250000.0
+    MAX_AUTONOMOUS_TRANSACTION_INR: float = 2000.0
+    AUDIT_HMAC_SECRET: str = "agentpay-demo-audit-secret-change-me"
     ALLOWED_CURRENCY: str = "INR"
     ALLOWED_ORIGINS: List[str] = ["http://localhost:5173"]
     ALLOWED_MERCHANTS: List[str] = [

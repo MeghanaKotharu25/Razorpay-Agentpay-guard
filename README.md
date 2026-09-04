@@ -1,3 +1,26 @@
+```mermaid
+flowchart TD
+	subgraph Agentic Layer
+		U[AI Buyer / Autonomous Agent] -->|Agentic Commerce Action| AP2[AP2 Protocol Request]
+	end
+
+	subgraph AgentPay-Guard Gateway
+		AP2 --> INT[Gateway Interceptor]
+		INT --> VAL[Schema & Pydantic Validator]
+		VAL --> RE[Deterministic Rules Engine]
+		RE -->|Budget & Velocity Check| SG[Semantic Drift & Injection Guard]
+		SG -->|Pass| RZP[Razorpay Test API Client]
+		SG -->|Drift > Threshold| CB[Circuit Breaker / Human Gate]
+		RE -->|Budget Exceeded| CB
+	end
+
+	subgraph Settlement & Integrity
+		RZP -->|order.created / payment.authorized| AUDIT[(Merkle Chain Crypto Vault)]
+		CB -->|Graceful Fallback| LINK[Emit Hosted Payment Link to User]
+		LINK --> AUDIT
+	end
+```
+
 # AgentPay-Guard
 
 AgentPay-Guard is a zero-trust gateway for agentic commerce. A shopping agent proposes an order, then the gateway validates deterministic payment invariants, verifies an AP2 mandate, checks semantic intent and lexical category drift, and either blocks, escalates to a human, or dispatches to Razorpay test mode. Every decision is hash-chained in SQLite.

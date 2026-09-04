@@ -1,5 +1,6 @@
 import re
 from typing import Set
+from typing import Any, Dict
 
 class LexicalCategoryDriftEngine:
 
@@ -55,8 +56,25 @@ class LexicalCategoryDriftEngine:
 
         return 0.50
 
-    async def compute_drift(self, user_intent: str, sku: str) -> float:
+    async def compute_drift(self, user_intent: str, proposed_tool_payload: Dict[str, Any] | str) -> float:
         # Deterministic classification is insusceptible to remote API rate limits.
-        return self.compute_lexical_drift(user_intent, sku)
+        if isinstance(proposed_tool_payload, str):
+            sku = proposed_tool_payload
+            amount = None
+            quantity = 1
+        else:
+            sku = str(proposed_tool_payload.get("product_sku", ""))
+            amount = proposed_tool_payload.get("amount_inr")
+            quantity = proposed_tool_payload.get("quantity", 1)
+
+        drift = self.compute_lexical_drift(user_intent, sku)
+        budget_match = re.search(r"(?:under|below|within|less than)\s*(?:₹|inr\s*)?([\d,]+)", user_intent, re.IGNORECASE)
+        if budget_match and amount is not None and float(amount) > float(budget_match.group(1).replace(",", "")):
+            drift = max(drift, 0.85)
+        quantity_match = re.search(r"(?:buy|order|purchase)\s+(\d+)\b", user_intent, re.IGNORECASE)
+        requested_quantity = int(quantity_match.group(1)) if quantity_match else 1
+        if quantity != requested_quantity:
+            drift = max(drift, 0.85 if quantity > requested_quantity else 0.50)
+        return min(1.0, drift)
 
 vector_drift_engine = LexicalCategoryDriftEngine()

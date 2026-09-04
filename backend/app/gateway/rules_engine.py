@@ -1,4 +1,5 @@
 import hashlib
+import json
 import time
 from typing import Optional
 from pydantic import BaseModel, Field
@@ -16,7 +17,24 @@ class PaymentToolPayload(BaseModel):
     user_max_budget: float
     product_sku: str
     quantity: int = Field(gt=0)
+    cart_hash: Optional[str] = None
     ap2_mandate: Optional[AP2PaymentMandate] = None
+
+    def resolved_cart_hash(self) -> str:
+        if self.cart_hash:
+            return self.cart_hash
+        cart = {"product_sku": self.product_sku, "quantity": self.quantity}
+        return hashlib.sha256(json.dumps(cart, sort_keys=True).encode()).hexdigest()
+
+    def idempotency_fingerprint(self) -> str:
+        value = f"{self.session_id}|{self.merchant_id}|{self.amount_inr}|{self.resolved_cart_hash()}"
+        return hashlib.sha256(value.encode()).hexdigest()
+
+
+class ActionBoundedError(Exception):
+    """Raised when an agent action needs an interactive payment step-up."""
+
+    pass
 
 class DeterministicValidationResult(BaseModel):
     is_valid: bool
@@ -94,6 +112,11 @@ class DeterministicRulesEngine:
             )
 
         await crypto_vault.consume_nonce(nonce_signature, payload.session_id)
+        if payload.amount_inr > settings.MAX_AUTONOMOUS_TRANSACTION_INR:
+            raise ActionBoundedError(
+                f"Autonomous transaction limit is ₹{settings.MAX_AUTONOMOUS_TRANSACTION_INR:,.2f}; "
+                "an interactive payment step-up is required."
+            )
         elapsed = (time.perf_counter() - start_time) * 1000
 
         return DeterministicValidationResult(

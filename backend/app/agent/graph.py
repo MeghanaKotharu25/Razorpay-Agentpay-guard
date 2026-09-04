@@ -58,17 +58,22 @@ async def reason_and_propose_node(state: AgentWorkflowState) -> Dict[str, Any]:
         "catalog_results": state["retrieved_catalog_items"]
     }
 
-    response = await client.chat.completions.create(
-        model=settings.PRIMARY_MODEL,
-        messages=[
-            {"role": "system", "content": system_instruction},
-            {"role": "user", "content": json.dumps(user_input)}
-        ],
-        temperature=0.2,
-        response_format={"type": "json_object"}
-    )
-    
-    parsed = json.loads(response.choices[0].message.content or "{}")
+    try:
+        response = await client.chat.completions.create(
+            model=settings.PRIMARY_MODEL,
+            messages=[
+                {"role": "system", "content": system_instruction},
+                {"role": "user", "content": json.dumps(user_input)}
+            ],
+            temperature=0.2,
+            response_format={"type": "json_object"}
+        )
+        parsed = json.loads(response.choices[0].message.content or "{}")
+    except Exception as e:
+        return {
+            "proposed_payment_payload": {},
+            "agent_response_text": f"Agent proposal unavailable; gateway failed closed ({str(e)[:120]})."
+        }
     tool_call = parsed.get("tool_call", {})
     
     # Generate cryptographic AP2 Mandate Token
