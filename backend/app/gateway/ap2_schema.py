@@ -3,6 +3,7 @@ import hmac
 import time
 from typing import Optional, Dict, Any
 from pydantic import BaseModel, Field
+from app.config import settings
 
 class AP2PaymentMandate(BaseModel):
     mandate_id: str
@@ -10,7 +11,7 @@ class AP2PaymentMandate(BaseModel):
     max_amount_inr: float
     currency: str = "INR"
     valid_until: float
-    signature: str  # Simulated HMAC-SHA256 signature from user private key
+    signature: str  # Simplified HMAC-SHA256 AP2 mandate simulation for the demo
 
 class X402PaymentChallenge(BaseModel):
     status: int = 402
@@ -22,8 +23,8 @@ class X402PaymentChallenge(BaseModel):
     mandate_required: bool = True
 
 class AP2TokenVerifier:
-    def __init__(self, secret_key: str = "agentpay_demo_shared_secret"):
-        self.secret_key = secret_key
+    def __init__(self, secret_key: Optional[str] = None):
+        self.secret_key = secret_key or settings.AP2_SIGNING_SECRET
 
     def generate_mandate_signature(self, user_id: str, max_amount_inr: float, valid_until: float) -> str:
         payload = f"{user_id}:{max_amount_inr}:{valid_until}".encode()

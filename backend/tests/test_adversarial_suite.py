@@ -20,11 +20,17 @@ def isolate_test_db(tmp_path):
     """Synchronous fixture ensuring each test run operates on an isolated throwaway SQLite database."""
     temp_db_path = str(tmp_path / "test_audit_vault.db")
     original_db = crypto_vault.db_path
+    original_session_limit = settings.MAX_SESSION_SPEND_INR
+    original_daily_limit = settings.MAX_DAILY_SPEND_INR
     crypto_vault.db_path = temp_db_path
     crypto_vault._initialized = False
+    settings.MAX_SESSION_SPEND_INR = 1000000.0
+    settings.MAX_DAILY_SPEND_INR = 1000000.0
     yield
     crypto_vault.db_path = original_db
     crypto_vault._initialized = False
+    settings.MAX_SESSION_SPEND_INR = original_session_limit
+    settings.MAX_DAILY_SPEND_INR = original_daily_limit
 
 
 @pytest.mark.asyncio
@@ -158,7 +164,7 @@ async def test_run_full_benchmark():
         tool_payload["session_id"] = session_id
         tool_payload["nonce"] = uuid.uuid4().hex
 
-        # Only auto-issue a valid AP2 mandate if the case didn't already
+        # Only auto-issue a valid simplified AP2 mandate simulation if the case didn't already
         # supply one (ap2_mandate_forgery cases bring their own forged
         # mandate and must not have it overwritten with a valid one, or the
         # forgery test is meaningless).

@@ -76,7 +76,7 @@ async def reason_and_propose_node(state: AgentWorkflowState) -> Dict[str, Any]:
         }
     tool_call = parsed.get("tool_call", {})
     
-    # Generate cryptographic AP2 Mandate Token
+    # Generate the simplified HMAC-based AP2 mandate simulation token.
     valid_until = time.time() + 600.0  # 10 minute TTL
     user_id = f"usr_{state['session_id'][:8]}"
     mandate_sig = ap2_verifier.generate_mandate_signature(

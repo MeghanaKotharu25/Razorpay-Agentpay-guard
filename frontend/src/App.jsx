@@ -112,7 +112,7 @@ export default function App() {
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold tracking-tight">AgentPay-Guard</h1>
               <span className="text-[10px] bg-indigo-950 text-indigo-300 border border-indigo-800 px-2 py-0.5 rounded font-mono">
-                AP2 / x402 Gateway
+                AP2 simulation / x402 Gateway
               </span>
             </div>
             <p className="text-xs text-slate-400">Zero-Trust Invariant Firewall for Autonomous Agentic Commerce</p>

@@ -56,16 +56,23 @@ class DeterministicRulesEngine:
                 latency_ms=elapsed
             )
 
-        # Rule 2: AP2 Cryptographic Mandate Signature Verification
-        if payload.ap2_mandate:
-            if not ap2_verifier.verify_mandate(payload.ap2_mandate):
-                elapsed = (time.perf_counter() - start_time) * 1000
-                return DeterministicValidationResult(
-                    is_valid=False,
-                    violation_code="INVALID_AP2_MANDATE",
-                    reason="AP2 cryptographic mandate token signature is invalid or expired.",
-                    latency_ms=elapsed
-                )
+        # Rule 2: Simplified HMAC-based AP2 mandate simulation verification
+        if not payload.ap2_mandate:
+            elapsed = (time.perf_counter() - start_time) * 1000
+            return DeterministicValidationResult(
+                is_valid=False,
+                violation_code="MISSING_AP2_MANDATE",
+                reason="A simplified HMAC-based AP2 mandate simulation is required.",
+                latency_ms=elapsed
+            )
+        if not ap2_verifier.verify_mandate(payload.ap2_mandate):
+            elapsed = (time.perf_counter() - start_time) * 1000
+            return DeterministicValidationResult(
+                is_valid=False,
+                violation_code="INVALID_AP2_MANDATE",
+                reason="Simplified HMAC-based AP2 mandate simulation signature is invalid or expired.",
+                latency_ms=elapsed
+            )
 
         # Rule 3: User Authorized Budget Invariant (Fixed Encoding)
         if payload.amount_inr > payload.user_max_budget:
@@ -78,12 +85,12 @@ class DeterministicRulesEngine:
             )
 
         # Rule 4: Gateway Hard Spend Ceiling
-        if payload.amount_inr > settings.MAX_SESSION_SPEND_INR:
+        if payload.amount_inr > settings.MAX_ORDER_AMOUNT_INR:
             elapsed = (time.perf_counter() - start_time) * 1000
             return DeterministicValidationResult(
                 is_valid=False,
                 violation_code="SYSTEM_SPEND_CAP_EXCEEDED",
-                reason=f"Amount ₹{payload.amount_inr:,.2f} breaches gateway ceiling of ₹{settings.MAX_SESSION_SPEND_INR:,.2f}.",
+                reason=f"Amount ₹{payload.amount_inr:,.2f} breaches gateway per-order ceiling of ₹{settings.MAX_ORDER_AMOUNT_INR:,.2f}.",
                 latency_ms=elapsed
             )
 

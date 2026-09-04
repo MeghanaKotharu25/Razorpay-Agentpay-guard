@@ -13,7 +13,7 @@ from app.config import settings
 app = FastAPI(
     title="AgentPay-Guard Enterprise Security Gateway",
     version="2.1.0",
-    description="Zero-Trust Invariant Firewall & AP2 Gateway for Autonomous Commerce"
+    description="Zero-Trust Invariant Firewall with a simplified HMAC-based AP2 mandate simulation"
 )
 
 app.add_middleware(
@@ -30,8 +30,13 @@ async def startup_event():
 
 @app.middleware("http")
 async def require_api_key(request: Request, call_next):
-    protected_paths = {"/api/agent/run", "/api/gateway/escalate/resolve"}
-    if request.url.path in protected_paths and request.headers.get("X-AgentPay-Key") != settings.API_AUTH_KEY:
+    protected_paths = {
+        "/api/agent/run",
+        "/api/gateway/escalate/resolve",
+        "/api/audit/logs",
+    }
+    protected = request.url.path in protected_paths or request.url.path.startswith("/api/vault/spend/")
+    if protected and request.headers.get("X-AgentPay-Key") != settings.API_AUTH_KEY:
         return JSONResponse(status_code=401, content={"detail": "Valid X-AgentPay-Key header is required."})
     return await call_next(request)
 
@@ -55,6 +60,10 @@ async def get_agent_catalog():
         "merchant": "AgentPay Demo Merchant Network",
         "currency": settings.ALLOWED_CURRENCY,
         "checkout_endpoint": "/api/agent/run",
+        "authentication": {
+            "type": "api_key",
+            "header": "X-AgentPay-Key",
+        },
         "items": MOCK_CATALOG,
     }
 

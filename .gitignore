@@ -12,6 +12,8 @@ __pycache__/
 *.db
 *.sqlite3
 audit_vault.db
+.audit_hmac_secret
+.ap2_signing_secret
 
 # Secrets & Environment Files
 .env

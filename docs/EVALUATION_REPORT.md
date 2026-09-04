@@ -2,7 +2,7 @@
 
 ## Benchmark design
 
-`backend/tests/benchmark_dataset.json` contains 64 cases spanning legitimate purchases, prompt injection, poisoned catalog/SKU context, category substitutions, currency and budget abuse, AP2 mandate forgery, replay, quantity manipulation, and regex evasion. Cases requiring the live semantic guard are skipped when the repository is run with the offline mock key.
+`backend/tests/benchmark_dataset.json` contains 64 cases spanning legitimate purchases, prompt injection, poisoned catalog/SKU context, category substitutions, currency and budget abuse, simplified HMAC-based AP2 mandate simulation forgery, replay, quantity manipulation, and regex evasion. Cases requiring the live semantic guard are skipped when the repository is run with the offline mock key.
 
 ## Reported metrics
 
@@ -42,11 +42,11 @@ Attack Prevention Rate (BLOCK+escalate): 100.0%
 false allow: 0
 false block: 0
 Security Decision Precision: 100.0%
-The offline run also exercises one clean autonomous `ALLOW`; higher-value benign catalog purchases are correctly reported as human-gated because they exceed the ₹2,000 autonomous transaction bound.
+The offline run also exercises one clean autonomous `ALLOW`; higher-value benign catalog purchases are correctly reported as human-gated because they exceed the ₹2,000 autonomous transaction bound. The benchmark fixture raises only its reporting-only daily budget so independent HITL cases can be resolved; the dedicated spend regression still verifies the actual daily cap.
 ```
 
 ## Residual risk
 
-The benchmark is defense-focused and not a substitute for production abuse testing. The demo API uses a shared API key rather than user identity or per-user authorization, uses SQLite, and defaults to a free remote model. These are disclosed deployment constraints, not hidden assumptions.
+The benchmark is defense-focused and not a substitute for production abuse testing. The demo API uses a shared API key rather than user identity or per-user authorization, uses SQLite, and defaults to a free remote model. These are disclosed deployment constraints, not hidden assumptions. Render and Vercel manifests are included, but no live deployment URL is claimed until platform credentials and a persistent production database are configured.
 
 Benign coverage includes the low-value keyboard purchase used to prove a clean autonomous `ALLOW`, along with the legitimate catalog purchase cases. Gift wrapping and discount-code language should remain non-mutating context; they must not be interpreted as authorization to change amount, merchant, quantity, or currency.

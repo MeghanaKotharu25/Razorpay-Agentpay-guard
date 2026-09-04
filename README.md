@@ -35,11 +35,11 @@ flowchart TD
 	end
 ```
 
-AgentPay-Guard is a zero-trust gateway for agentic commerce. A shopping agent proposes an order, then the gateway validates deterministic payment invariants, verifies an AP2 mandate, checks semantic intent and lexical category drift, and either blocks, escalates to a human, or dispatches to Razorpay test mode. Every decision is hash-chained in SQLite.
+AgentPay-Guard is a zero-trust gateway for agentic commerce. A shopping agent proposes an order, then the gateway validates deterministic payment invariants, verifies a simplified HMAC-based AP2 mandate simulation, checks semantic intent and lexical category drift, and either blocks, escalates to a human, or dispatches to Razorpay test mode. Every decision is hash-chained in SQLite.
 
 ## Demo flow
 
-The dashboard runs with `cd frontend && npm run dev`. Use the demo API key from `.env.example` for local requests. A clean autonomous purchase can use `Buy compact mechanical keyboard within 2000`; higher-value actions become expiring hosted payment links requiring human approval. Poisoned SKUs are blocked and borderline substitutions can be approved in the dashboard. The machine-readable catalog is available at `/.well-known/agent-catalog.json`.
+The dashboard runs with `cd frontend && npm run dev`. Use the demo API key from `.env.example` for local requests. A clean autonomous purchase can use `Buy compact mechanical keyboard within 2000`; higher-value actions become expiring hosted payment links requiring human approval. Poisoned SKUs are blocked and borderline substitutions can be approved in the dashboard. External agents can discover the machine-readable catalog at `/.well-known/agent-catalog.json` and submit the advertised checkout request with `X-AgentPay-Key`.
 
 The dashboard keeps a browser session ID, so repeated approved orders share the cumulative session cap. The gateway also enforces a UTC daily cap. Blocked and pending orders do not consume spend; only dispatched orders reserve it atomically. Bounded actions create an expiring Razorpay Payment Link when test credentials are configured, or a clearly marked local demo fallback otherwise.
 
