@@ -28,6 +28,15 @@ app.add_middleware(
 async def startup_event():
     await crypto_vault.init_vault()
 
+@app.get("/")
+async def service_status():
+    return {
+        "service": "AgentPay-Guard",
+        "status": "online",
+        "catalog": "/.well-known/agent-catalog.json",
+        "audit_verification": "/api/v1/audit/verify",
+    }
+
 @app.middleware("http")
 async def require_api_key(request: Request, call_next):
     protected_paths = {
