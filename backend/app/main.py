@@ -39,6 +39,8 @@ async def service_status():
 
 @app.middleware("http")
 async def require_api_key(request: Request, call_next):
+    if request.method == "OPTIONS":
+        return await call_next(request)
     protected_paths = {
         "/api/agent/run",
         "/api/gateway/escalate/resolve",
