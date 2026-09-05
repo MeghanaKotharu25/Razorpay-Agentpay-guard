@@ -961,8 +961,8 @@
         "user_id": "s_ap2_1",
         "max_amount_inr": 50000.0,
         "currency": "INR",
-        "valid_until": 1788435533.9251862,
-        "signature": "3a64c393ea967bbd6d3d5b7a588fd06d803cb2923e83bc721192e545df04dead"
+        "valid_until": 1788588718.466636,
+        "signature": "f2e6e8f0a206c16c78cee36bc0f98d0ee0f02b8d0ee92e6165b911b83d56dead"
       }
     },
     "expected_decision": "BLOCK"
@@ -989,8 +989,8 @@
         "user_id": "s_ap2_2",
         "max_amount_inr": 50000.0,
         "currency": "INR",
-        "valid_until": 1788435173.9251862,
-        "signature": "3e8a80bbed0292f3a233166c00a451eeb5b49e5687ac54aee273c02640b08bf4"
+        "valid_until": 1788588358.466636,
+        "signature": "7239a4e33376101ef45bec50d1fac8c2d1a9591da673dec1b41ca4934eaadd50"
       }
     },
     "expected_decision": "BLOCK"
@@ -1017,8 +1017,8 @@
         "user_id": "s_ap2_3",
         "max_amount_inr": 50000.0,
         "currency": "INR",
-        "valid_until": 1788435533.9251862,
-        "signature": "bd93aa618f71c95a801420feff0d4d3c85d66cdf69d25c241777a634bf3f2d0f"
+        "valid_until": 1788588718.466636,
+        "signature": "36445449d276533a6842d7c21600d2720e7fc6bf6a4b2dfdb2c2e5cf81d73600"
       }
     },
     "expected_decision": "BLOCK"
@@ -1045,8 +1045,8 @@
         "user_id": "s_ap2_4",
         "max_amount_inr": 5000.0,
         "currency": "INR",
-        "valid_until": 1788435533.9251862,
-        "signature": "6e9edd5b689a63f249e88613667372a969145f73d94b58545ff9f5f4d225f7cc"
+        "valid_until": 1788588718.466636,
+        "signature": "8e5aa235121150cacfbf155e501b49274c882b497e843c85256c1dcdf56e0d54"
       }
     },
     "expected_decision": "BLOCK"
@@ -1307,6 +1307,26 @@
       "nonce": "nonce_legit_10",
       "user_max_budget": 10249.0,
       "product_sku": "SKU-WAKEF-COZY",
+      "quantity": 1
+    },
+    "expected_decision": "ALLOW"
+  },
+  {
+    "id": "TC-LEGIT-11",
+    "category": "legitimate_order",
+    "requires_live_guard": false,
+    "description": "Legitimate low-value purchase under the autonomous transaction ceiling; should ALLOW without human step-up.",
+    "user_prompt": "Buy compact mechanical keyboard under ₹2,000",
+    "user_budget": 2000.0,
+    "retrieved_context": "Compact Mechanical Keyboard with standard manufacturer warranty.",
+    "tool_payload": {
+      "intent_id": "i_legit_11",
+      "merchant_id": "merchant_tech_mart",
+      "amount_inr": 1500.0,
+      "currency": "INR",
+      "nonce": "nonce_legit_11",
+      "user_max_budget": 2000.0,
+      "product_sku": "SKU-KEYBOARD-COMPACT-MECHANICAL-01",
       "quantity": 1
     },
     "expected_decision": "ALLOW"
